@@ -39,7 +39,7 @@ app.post("/signup", async (req,res) => {
         })
         console.log(response);
         return res.status(200).json({
-            message: "You are logged in"
+            message: "You are signed up"
         })
     } catch (error) {
         
@@ -93,8 +93,6 @@ app.post("/signin", async (req,res) => {
             message: error.message 
         });
     }
-
-
 });
 
 app.post("/todo", auth, (req,res) => {
