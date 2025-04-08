@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const express = require("express");
 require('dotenv').config()
 
@@ -20,7 +21,6 @@ const {auth } = require("./auth");
 app.post("/signup", async (req,res) => {
     try {
         const body = req.body;
-        console.log(body);
         const parsedBody = signUpSchema.safeParse(body);
         if (!parsedBody.success) {
             res.status(400).json({
@@ -32,9 +32,12 @@ app.post("/signup", async (req,res) => {
             return;
         }
         const {email, password, name} = parsedBody.data;
+
+        const hashedPassword = await bcrypt.hash(password, 5);
+
         const response = await UserModel.create({
             email: email,
-            password: password,
+            password: hashedPassword,
             name:  name
         })
         console.log(response);
@@ -69,25 +72,28 @@ app.post("/signin", async (req,res) => {
     }
         const {email,password} = parsedBody.data;
         
-        const user = await UserModel.findOne({
+        const response = await UserModel.findOne({
             email: email,
-            password: password
     });
+    if(!response){
+        res.status(403).json({
+            message: "user not found"
+        })
+    }
     
+    const authenticatedUser = await bcrypt.compare(password,response.password);
+    if(!authenticatedUser) {
+        return res.status(403).json({
+            message: "Passoword does not match"
+        })
+        } 
 
-    if(user) {
         const token =jwt.sign({
-            id: user._id
+            id: response._id
         }, JWT_SECRET);
         res.status(200).json({
             token: token
         });
-    
-        } else {
-        res.status(403).json({
-            message: "Invalid credentials"
-        })
-    } 
     } catch (error) {
     return res.status(500).json({
             message: error.message 
